@@ -3,14 +3,8 @@
 ## 演習
 
 - 第1回（素のLLM）とエージェントの回答の違い：一般論で答えていた回答から、用語集を参照して答えられるようになった。
-- `--trace` で見えたツール呼び出し（ツール名と引数）：
-- 1つの質問での LLM 呼び出し回数（`requests`）：--- trace ---
-[tool call]   search_glossary({'query': 'LoRA'})
-[tool call]   search_glossary({'query': 'QLoRA'})
-[tool return] search_glossary -> [{"term": "LoRA", "lecture": 2, "definition": "事前学習済みの重みは固定したまま、重みの更新分を2つの小さな行列の積（低ランク行列）で表し、その小さな行列だけを学習するPEFT手法。学習するパラ…
-[tool return] search_glossary -> [{"term": "QLoRA", "lecture": 2, "definition": "ベースモデルの重みを4ビットなどに量子化してメモリを節約したうえで、LoRAで学習する手法。より大きなモデルを小さなGPUで扱える。本講座の第2…
-[usage] RunUsage(cost=Decimal('0.0008469'), details={'text_prompt_tokens': 1198}, input_text_tokens=1198, input_tokens=1198, output_tokens=195, requests=2, tool_calls=2)
-
+- `--trace` で見えたツール呼び出し（ツール名と引数）：search_glossary({'query': 'LoRA'}) と search_glossary({'query': 'QLoRA'}) の2回
+- 1つの質問での LLM 呼び出し回数（`requests`）：2回
 - 追加したツールと、docstring に書いた説明：make_quiz(lecture: int) -> str
 指定した講義回の用語から確認問題を作成するツール。講義内容の復習問題と答えを求められたときに使用する。
 
@@ -28,7 +22,10 @@ CLIで保存予定の内容を表示し、y または yes が入力された場�
 Copilotを活用して実装し、TestModelによる自動テストで承認前は保存されず、承認後に保存されることを確認した。
 
 - 結果：
+
 【基礎】
+
+```text
 $ uv run python -m app.agent --trace "LoRA とQLoRAの違いは？ "
 [model] gemini-3.5-flash-lite
 LoRAとQLoRAの違いについて、講座の用語集を基にわかりやすく解説しますね！
@@ -40,14 +37,22 @@ LoRAとQLoRAの違いについて、講座の用語集を基にわかりやす�
 ### **まとめ（違い）**
 * **LoRA**は、重みを変えずに「更新分だけを小さな行列で学習して効率化する」方法です。
 * **QLoRA**は、LoRAの仕組みに加え、ベースモデルの重み自体を「4ビットなどに量子化（圧縮）」することで、さらにメモリを節約し、限られたGPU環境でも大きなモデルを扱えるようにした発展形です。
+```
 
 【実装】
+
 save_learning_log を呼び出したところ、以下の承認要求が表示された。
 
+```text
 save_learning_log の実行承認が必要です。
 引数: {"note": "Human-in-the-Loopについて学びました。エージェントの処理の途中に人の確認や承認を組み込む仕組みで、データの書き込みや送信など取り消しにくい操作の前に使うことがわかりました。"}
 
-
 関係する回：第2回
+```
 
+y を入力して承認すると、learning_log/learning_log.jsonl に次の1行が保存された（2026-11-07 に再実行したときの記録）。
+
+```json
+{"timestamp": "2026-11-07T09:13:50.400536+00:00", "note": "Human-in-the-loopについて学習しました。エージェントの処理の途中に人の確認や承認を組み込み、データの書き込みや送信など取り消しにくい操作の前に使う仕組みであることを学びました。"}
+```
 - 気づき・疑問：承認要求の実装は、今後安全なエージェントを作るためには必要だと思うので、ここで実装の仕方を学べたことは良かった。

@@ -23,7 +23,7 @@ def _parts(result, kind):
 
 
 def test_base_tools_are_registered_and_called():
-    model = TestModel()git add tests/test_agent.py
+    model = TestModel()
     with agent.override(model=model):
         result = agent.run_sync("LoRAとは？")
 

@@ -13,18 +13,26 @@
 （第3回で、用語集を検索できるエージェントにして改善する）
 """
 
+import os
 import argparse
 import time #応答時間計測のためインポート
 
 from google import genai
 from google.genai.chats import Chat
-from google.genai import errors
+from google.genai import errors, types
 
 from app.config import MODEL, api_error_message, get_api_key
 
 # 講座に固有の質問。正しい答えは data/glossary.json の homework-levels にある
 DEFAULT_QUESTION = "AIE2026の講座の宿題にある「3レベル」とは何ですか？"
 
+
+def build_chat_config() -> types.GenerateContentConfig | None:
+    """環境変数 AIE_TEMPERATURE があれば、その temperature を使う設定を作る。"""
+    temperature = os.getenv("AIE_TEMPERATURE")
+    if temperature is None:
+        return None
+    return types.GenerateContentConfig(temperature=float(temperature))
 
 def ask(chat: Chat, question: str) -> str:
     #  送信前の現在時刻を記録する
@@ -66,7 +74,7 @@ def main() -> None:
 
     print(f"[model] {MODEL}")
     client = genai.Client(api_key=get_api_key())
-    chat = client.chats.create(model=MODEL)
+    cchat = client.chats.create(model=MODEL, config=build_chat_config())
     question = args.question
 
     try:
