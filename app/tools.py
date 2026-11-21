@@ -8,8 +8,6 @@ import json
 from functools import cache
 from pathlib import Path
 
-from app.config import api_error_message
-
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 MAX_RESULTS = 3
 
@@ -88,15 +86,16 @@ def search_materials(query: str) -> str:
     """
     from google.genai.errors import APIError
     import sqlite3
-    from app.retrieval import search
+    from app.retrieval import search, search_with_neighbors
+    from app.config import RAG_NEIGHBORS
 
     try:
-        return json.dumps({"results": search(query)}, ensure_ascii=False)
+        fn = search_with_neighbors if RAG_NEIGHBORS else search
+        return json.dumps({"results": fn(query)}, ensure_ascii=False)
     except (ValueError, FileNotFoundError, sqlite3.Error) as e:
         return json.dumps({"error": str(e), "results": []}, ensure_ascii=False)
     except APIError as e:
         return json.dumps({"error": api_error_message(e.code), "results": []}, ensure_ascii=False)
-
 
 def browse_tree(node_id: str | None = None) -> str:
     """目次とページの先頭文を返す。ページIDを指定すると全文を返す。
